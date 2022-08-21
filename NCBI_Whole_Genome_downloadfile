@@ -1,0 +1,374 @@
+
+
+
+
+"""import beautifulsoup4 as bs4
+and from bs4 module import BeautifulSoup class"""
+
+from bs4 import BeautifulSoup
+import os
+
+from openpyxl import Workbook, load_workbook
+
+
+wb=Workbook()
+
+ws=wb.active
+
+"""import requests module"""
+
+import requests
+
+"""import pandas module"""
+import pandas as pd
+
+"""url of ncbi that contains genome information of macaca mulatta"""
+
+def function_fasta():
+
+    
+    import os
+    from Bio import Entrez
+
+    url=input("Enter the url: ")
+
+    """make requests to get the html source code from url, using the get() function of requests module"""
+
+    page=requests.get(url)
+
+    """source code is assigned to a variable, now parse them in text format using "lxml" parser, using BeautifulSoup
+    class"""
+
+    soup=BeautifulSoup(page.text, "lxml")
+
+    """from the entire page data, we need to scrape the table data. for that we use the find() function
+    of the BeautifulSoup() class"""
+
+    table_data=soup.find("table", {"class":"GenomeList2"})
+
+
+    """from the table data we need to scrape all the table header values"""
+    """for that purpose we use find_all() function"""
+    title=table_data.find_all("th")
+
+    """now all the headers appear as a list"""
+    """headers are in a list. each header needs to be processed. we need to remove the html tag. we need to 
+    trim the extra white space"""
+    """I am using list comprehension"""
+
+    header_list=[header.text.strip() for header in title] 
+
+
+    """now we need to scrape each row except the header, using thr find_all() fucntion"""
+
+    row_data=table_data.find_all("tr")[1:]
+
+
+    row_list=[]
+
+    """now iterate through each row_data and find all the row_information"""
+    for row in row_data:
+        row_info=row.find_all("td")
+        
+        
+        row_infolist=[info.text.strip() for info in row_info]
+        
+        if len(row_infolist)!=1:
+        
+            row_list.append(row_infolist)
+            
+
+    """now the strategy is: a for loop iteration of each column; for each column selected, 
+    select each row sequentially, for each row selected, select the item corresponding to the column number. """
+
+    dict1={}
+    for item in range(len(header_list)):
+        
+        for item1 in row_list:
+            
+            for item2 in range(item, item+1):
+                
+                """now we will create a dictionary where the column is the key and the column items is the value"""
+                
+                if header_list[item] not in dict1:
+                    
+                    dict1[header_list[item]]=[item1[item2]]
+                    
+                elif header_list[item] in dict1:
+                    
+                    dict1[header_list[item]].append(item1[item2])
+
+
+        
+    print(dict1)  
+
+    """using the DataFrame class of the pandas module, feed dictionary file headers as keys and column vallues as values"""
+    df=pd.DataFrame(dict1)
+    name=input("enter the name of the animal: ")
+    name1=name+".csv"
+    path_=r'C:\Users\USER\OneDrive\Desktop'
+    file_path=os.path.join(path_, name1)
+    df.to_csv(file_path)
+
+    print(df)    
+        
+
+    import csv
+
+    j=1
+
+    with open (file_path, "r")as f1:
+
+        csv_reader=csv.reader(f1)
+        for item in csv_reader:
+            for i in range(1, 7):
+
+                ws.cell(row=j, column=i).value=item[i-1]
+
+            j+=1
+
+    name2=name+".xlsx"
+    file_path2=os.path.join(path_, name2)
+
+    wb.save(file_path2)            
+        
+    """=========================================================="""
+
+    import openpyxl
+    from openpyxl import Workbook, load_workbook
+    from urllib.request import urlopen
+
+    #load workbook
+
+    wb1=load_workbook(file_path2)
+
+    ws1=wb1.active
+    dict2={}
+
+    i=1
+
+    while ((ws1.cell(row=i, column=4)).value) != None and ((ws1.cell(row=i, column=5)).value) != None and ((ws1.cell(row=i, column=5)).value)!=".":
+
+        if ((ws1.cell(row=i, column=4)).value)=="Name":
+
+
+            i+=1
+
+            continue
+        else:
+
+            value1=ws1.cell(row=i, column=4).value
+            value2=ws1.cell(row=i, column=5).value
+
+            dict2[value1]=value2
+            i+=1
+
+    print(f"dict2 values are {dict2}")
+
+    #Iterate through the dictionary over the range of its length
+
+    dict3={}
+
+    for chrm, ids in dict2.items():
+
+        #enter the id in the url
+
+        #print(dict2.items())
+
+        #assign the ncbi id for information retrieval 
+        
+        id_=ids
+
+        #set the url
+        
+        url="https://www.ncbi.nlm.nih.gov/nuccore/"+id_
+
+        #open the url to get the html data
+        html = urlopen(url).read().decode('utf-8')
+
+        file_path_html=os.path.join(path_, "file.txt")
+
+
+        with open(file_path_html, "w")as fw:
+
+            fw.write(html)
+
+
+
+        with open(file_path_html, "r")as rf:
+
+            file_=rf.readlines()
+
+            for item in file_:
+
+                if "SequenceSize" in item:
+
+                    item2=item.split(" ")
+
+                    for item in item2:
+
+                        if "SequenceSize" in item:
+
+                            item3=item.split('"')[-2]
+                            
+
+                            dict3[chrm]=item3
+
+    print(f"dict3 values are {dict3}")
+
+    path_fasta_final=os.path.join(path_, name)
+
+    from Bio import Entrez
+
+    if os.path.exists(path_fasta_final):
+
+
+
+        
+        for chrm, ids in dict2.items():
+
+            """dict2 contains chromosome ids as keys and ncbi ids as values"""
+            """register ncbi with email ids"""
+        Entrez.email="audrepreena87@gmail.com"
+
+
+
+        """use efetch function of the Entrez class to download the fasta file"""
+
+        fasta_file=Entrez.efetch(db='nucleotide', id=ids, rettype='fasta', retmode='text')
+
+        filename=chrm+".fasta"
+        print(filename)
+        print(path_fasta_final)
+
+        file_path_fasta=os.path.join(path_fasta_final, filename)
+
+        if os.path.isfile(file_path_fasta):
+
+            pass
+
+        else:
+        
+
+            fasta_write=open(file_path_fasta, 'w')
+
+            fasta_write.write(fasta_file.read())
+
+            fasta_write.close()
+            fasta_file.close()
+
+    else:
+
+        os.makedirs(path_fasta_final)
+
+        for chrm, ids in dict2.items():
+
+            """dict2 contains chromosome ids as keys and ncbi ids as values"""
+            """register ncbi with email ids"""
+            Entrez.email="audrepreena87@gmail.com"
+
+
+
+            """use efetch function of the Entrez class to download the fasta file"""
+
+            fasta_file=Entrez.efetch(db='nucleotide', id=ids, rettype='fasta', retmode='text')
+
+            filename=chrm+".fasta"
+            print(filename)
+            print(path_fasta_final)
+
+            file_path_fasta=os.path.join(path_fasta_final, filename)
+
+            if os.path.isfile(file_path_fasta):
+
+                pass
+
+            else:
+            
+
+                fasta_write=open(file_path_fasta, 'w')
+
+                fasta_write.write(fasta_file.read())
+
+                fasta_write.close()
+                fasta_file.close()
+
+          
+    #import os module
+    import os
+
+    from Bio import SeqIO
+    #list all the items in the directory
+
+    files=os.listdir(path_fasta_final)
+    #iterate over each file and get the size
+    print(files)
+
+    sequence_dict={}
+    for item in files:
+        
+        """read the fasta file"""
+        
+        path2=os.path.join(path_fasta_final, item)
+        
+        for record in SeqIO.parse(path2, 'fasta'):
+
+            
+            
+            len_fasta_seq=len(record.seq)
+
+            name3=item.split(".")[0]
+
+             
+            sequence_dict[name3]=len_fasta_seq
+
+    print(f"sequence_dict values are {sequence_dict}")    
+
+
+
+    wb2=Workbook()
+    ws2=wb2.active
+
+
+    i=1
+
+    for chrm, size in dict3.items():
+
+        
+
+        for chrm2, size2 in sequence_dict.items():
+
+            if str(chrm) == str(chrm2):
+
+                if int(size) == int(size2):
+
+
+                    
+
+                    ws2.cell(row=i, column=1).value=chrm2
+                    ws2.cell(row=i, column=2).value=size2
+
+                        
+
+                    print("size match")
+
+                    
+                    i+=1
+
+                else:
+
+                    print(f"chr {chrm}: size doesn't match")
+
+    file_path3=path_fasta_final
+
+    name4=name+"_final_"+".xlsx"
+
+    final_path=os.path.join(file_path3, name4)
+    wb2.save(final_path)
+                
+function_fasta()    
+
+
+
+
+
