@@ -1,6 +1,8 @@
+"""macaca mulatta is a non-human primate widely used in research such as AIDS, pharmacology,
+neuroscience etc. Now we are going to download the entire genome of macaca from ncbi, using bs4, requests, and lxml parser,
 
-
-
+Macaca mulatta has twenty pairs of autosomes and a pair of allosome. They are tabulated in NCBI.
+We We are going to scrape a table containing genome information of macaca mulatta"""
 
 """import beautifulsoup4 as bs4
 and from bs4 module import BeautifulSoup class"""
@@ -10,7 +12,7 @@ import os
 
 from openpyxl import Workbook, load_workbook
 
-
+from Bio import Entrez
 wb=Workbook()
 
 ws=wb.active
@@ -186,6 +188,8 @@ def function_fasta():
         #open the url to get the html data
         html = urlopen(url).read().decode('utf-8')
 
+        
+
         file_path_html=os.path.join(path_, "file.txt")
 
 
@@ -211,6 +215,7 @@ def function_fasta():
 
                             item3=item.split('"')[-2]
                             
+                            
 
                             dict3[chrm]=item3
 
@@ -218,60 +223,59 @@ def function_fasta():
 
     path_fasta_final=os.path.join(path_, name)
 
-    from Bio import Entrez
+    
 
-    if os.path.exists(path_fasta_final):
-
-
-
-        
-        for chrm, ids in dict2.items():
-
-            """dict2 contains chromosome ids as keys and ncbi ids as values"""
-            """register ncbi with email ids"""
-        Entrez.email="audrepreena87@gmail.com"
+         
+    for chrm, ids in dict2.items():
 
 
-
-        """use efetch function of the Entrez class to download the fasta file"""
-
-        fasta_file=Entrez.efetch(db='nucleotide', id=ids, rettype='fasta', retmode='text')
-
-        filename=chrm+".fasta"
-        print(filename)
-        print(path_fasta_final)
-
-        file_path_fasta=os.path.join(path_fasta_final, filename)
-
-        if os.path.isfile(file_path_fasta):
-
-            pass
-
-        else:
-        
-
-            fasta_write=open(file_path_fasta, 'w')
-
-            fasta_write.write(fasta_file.read())
-
-            fasta_write.close()
-            fasta_file.close()
-
-    else:
-
-        os.makedirs(path_fasta_final)
-
-        for chrm, ids in dict2.items():
+        if os.path.exists(path_fasta_final):
 
             """dict2 contains chromosome ids as keys and ncbi ids as values"""
             """register ncbi with email ids"""
-            Entrez.email="audrepreena87@gmail.com"
+            Entrez.email="vijithkumar7@gmail.com"
 
 
 
             """use efetch function of the Entrez class to download the fasta file"""
 
-            fasta_file=Entrez.efetch(db='nucleotide', id=ids, rettype='fasta', retmode='text')
+            fasta_file=Entrez.efetch(db='nucleotide', id=ids, retmode='text', rettype='fasta')
+
+            filename=chrm+".fasta"
+            print(filename)
+            print(path_fasta_final)
+
+            file_path_fasta=os.path.join(path_fasta_final, filename)
+
+            if os.path.isfile(file_path_fasta):
+
+                pass
+
+            else:
+            
+
+                fasta_write=open(file_path_fasta, 'w')
+
+                fasta_write.write(fasta_file.read())
+
+                fasta_write.close()
+                fasta_file.close()
+
+        else:
+
+            os.makedirs(path_fasta_final)
+
+            
+
+            """dict2 contains chromosome ids as keys and ncbi ids as values"""
+            """register ncbi with email ids"""
+            Entrez.email="vijithkumar7@gmail.com"
+
+
+
+            """use efetch function of the Entrez class to download the fasta file"""
+
+            fasta_file=Entrez.efetch(db='nucleotide', id=ids, retmode='text', rettype='fasta')
 
             filename=chrm+".fasta"
             print(filename)
@@ -355,7 +359,7 @@ def function_fasta():
                     
                     i+=1
 
-                else:
+                elif int(size)!=int(size2):
 
                     print(f"chr {chrm}: size doesn't match")
 
